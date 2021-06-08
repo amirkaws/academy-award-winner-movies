@@ -37,4 +37,5 @@ bin
 obj
 bin/
 obj/
+logs/
 

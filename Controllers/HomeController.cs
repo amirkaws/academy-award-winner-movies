@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using MvcMovie.Data;
 using MvcMovie.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
 namespace MvcMovie.Controllers
@@ -16,11 +17,13 @@ namespace MvcMovie.Controllers
     public class HomeController : Controller
     {
         private readonly MvcMovieContext _context;
+        private readonly UserManager<AppUser> _userManager;
         private readonly ILogger<HomeController> _logger;
 
-        public HomeController(MvcMovieContext context, ILogger<HomeController> logger)
+        public HomeController(MvcMovieContext context, UserManager<AppUser> userMgr, ILogger<HomeController> logger)
         {
             _context = context;
+            _userManager = userMgr;
             _logger = logger;
         }
 
@@ -103,6 +106,7 @@ namespace MvcMovie.Controllers
             {
                 _context.Add(movie);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation($"Movie Id: {movie.Id}, Title: {movie.Title} is created by {_userManager.GetUserName(User)}.");
                 return RedirectToAction(nameof(Index));
             }
             return View(movie);
@@ -138,6 +142,7 @@ namespace MvcMovie.Controllers
                 {
                     _context.Update(movie);
                     await _context.SaveChangesAsync();
+                    _logger.LogInformation($"Movie Id: {movie.Id}, Title: {movie.Title} is updated by {_userManager.GetUserName(User)}.");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -179,6 +184,7 @@ namespace MvcMovie.Controllers
             var movie = await _context.Movie.FindAsync(id);
             _context.Movie.Remove(movie);
             await _context.SaveChangesAsync();
+            _logger.LogInformation($"Movie Id: {movie.Id}, Title: {movie.Title} is deleted by {_userManager.GetUserName(User)}.");
             return RedirectToAction(nameof(Index));
         }
     }

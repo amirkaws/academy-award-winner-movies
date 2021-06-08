@@ -3,31 +3,28 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using MvcMovie.Models;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace MvcMovie.Controllers
 {
     [Authorize]
     public class AccountController : Controller
     {
-        private UserManager<AppUser> userManager;
-        private SignInManager<AppUser> signInManager;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(UserManager<AppUser> userMgr, SignInManager<AppUser> signinMgr)
+        public AccountController(UserManager<AppUser> userMgr, SignInManager<AppUser> signinMgr, ILogger<AccountController> logger)
         {
-            userManager = userMgr;
-            signInManager = signinMgr;
+            _userManager = userMgr;
+            _signInManager = signinMgr;
+            _logger = logger;
         }
-
-        public IActionResult Index()
-        {
-            return View();
-        }
-
+        
         [AllowAnonymous]
         public IActionResult Login(string returnUrl)
         {
-            Login login = new Login();
-            login.ReturnUrl = returnUrl;
+            var login = new Login { ReturnUrl = returnUrl };
             return View(login);
         }
 
@@ -38,20 +35,16 @@ namespace MvcMovie.Controllers
         {
             if (ModelState.IsValid)
             {
-                var appUser = await userManager.FindByNameAsync(login.Email);
-                if(appUser is null)
-                    appUser = await userManager.FindByEmailAsync(login.Email);
-                
+                var appUser = await _userManager.FindByNameAsync(login.Email) ?? await _userManager.FindByEmailAsync(login.Email);
+
                 if (appUser != null)
                 {
-                    await signInManager.SignOutAsync();
-                    Microsoft.AspNetCore.Identity.SignInResult result = await signInManager.PasswordSignInAsync(appUser, login.Password, false, true);
+                    await _signInManager.SignOutAsync();
+                    var result = await _signInManager.PasswordSignInAsync(appUser, login.Password, false, true);
                     if (result.Succeeded)
-                        return Redirect(login.ReturnUrl ?? "/");
-
-                    if (result.RequiresTwoFactor)
                     {
-                        return RedirectToAction("LoginTwoStep", new { appUser.Email, login.ReturnUrl });
+                        _logger.LogInformation($"User {login.Email} logged in.");
+                        return Redirect(login.ReturnUrl ?? "/");
                     }
                 }
                 ModelState.AddModelError(nameof(login.Email), "Login Failed: Invalid Email or password");
@@ -61,7 +54,10 @@ namespace MvcMovie.Controllers
 
         public async Task<IActionResult> Logout()
         {
-            await signInManager.SignOutAsync();
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user != null)
+                _logger.LogInformation($"User {user.UserName} logged out.");
+            await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
         
@@ -78,11 +74,11 @@ namespace MvcMovie.Controllers
             if (!ModelState.IsValid)
                 return View(changePassword);
                 
-            var user = await userManager.GetUserAsync(HttpContext.User);
+            var user = await _userManager.GetUserAsync(HttpContext.User);
             if (user == null)
                 return NotFound();
 
-            var changePassResult = await userManager.ChangePasswordAsync(user, changePassword.CurrentPassword, changePassword.NewPassword);
+            var changePassResult = await _userManager.ChangePasswordAsync(user, changePassword.CurrentPassword, changePassword.NewPassword);
 
             if (!changePassResult.Succeeded)
             {
@@ -90,6 +86,8 @@ namespace MvcMovie.Controllers
                     ModelState.AddModelError(error.Code, error.Description);
                 return View(changePassword);
             }
+            
+            _logger.LogInformation($"User {user.UserName} password changed.");
 
             return RedirectToAction("ChangePasswordConfirmation");
         }

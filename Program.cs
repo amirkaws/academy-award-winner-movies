@@ -16,26 +16,33 @@ namespace MvcMovie
             using (var scope = host.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
-
+                var logger = services.GetRequiredService<ILogger<Program>>();
                 try
                 {
+                    logger.LogInformation("Initialize Database ...");
                     DbHelper.Initialize(services);
+                    logger.LogInformation("Database Initialized");
                 }
                 catch (Exception ex)
                 {
-                    var logger = services.GetRequiredService<ILogger<Program>>();
                     logger.LogError(ex, "An error occurred seeding the DB.");
                 }
             }
-
+            
             host.Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
+        private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                });
+                })
+                .ConfigureLogging((ctx, builder) =>
+                {
+                    builder.AddConfiguration(ctx.Configuration.GetSection("Logging"));
+                    builder.AddFile("logs/applog-{Date}.txt");
+                })
+            ;
     }
 }

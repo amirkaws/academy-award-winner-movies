@@ -68,7 +68,7 @@ namespace MvcMovie.Data
         
         private static Movie[] GetMovies()
         {
-            return new Movie []
+            return new[]
             {
                 new Movie
                     {

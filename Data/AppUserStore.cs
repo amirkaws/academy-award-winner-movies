@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MvcMovie.Data
 {
-    public class AppUserStore : IUserStore<AppUser>, IUserPasswordStore<AppUser>
+    public class AppUserStore : IUserPasswordStore<AppUser>
     {
        private readonly MvcMovieContext _context;
 

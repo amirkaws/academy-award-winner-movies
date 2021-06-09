@@ -34,15 +34,14 @@ namespace MvcMovie
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                })
-                .ConfigureLogging((ctx, builder) =>
-                {
-                    builder.AddConfiguration(ctx.Configuration.GetSection("Logging"));
-                    builder.AddFile("logs/applog-{Date}.txt");
-                })
-            ;
+                });
     }
 }

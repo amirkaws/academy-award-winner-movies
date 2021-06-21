@@ -35,8 +35,7 @@ namespace MvcMovie.Controllers
         {
             if (ModelState.IsValid)
             {
-                var appUser = await _userManager.FindByNameAsync(login.Email) ?? await _userManager.FindByEmailAsync(login.Email);
-
+                var appUser = await _userManager.FindByNameAsync(login.Email);
                 if (appUser != null)
                 {
                     await _signInManager.SignOutAsync();

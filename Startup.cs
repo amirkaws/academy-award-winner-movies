@@ -32,12 +32,16 @@ namespace MvcMovie
                 var connectionString = Configuration.GetConnectionString("MvcMovieContext");
                 
                 var dbHost = Configuration["DBHOST"];
-                if(!string.IsNullOrWhiteSpace(dbHost))
+                var dbUser = Configuration["DBUSER"];
+                var dbPass = Configuration["DBPASS"];
+                var dbName = Configuration["DBNAME"];
+                
+                if(!string.IsNullOrWhiteSpace(dbHost) &&
+                   !string.IsNullOrWhiteSpace(dbUser) && 
+                   !string.IsNullOrWhiteSpace(dbPass) &&
+                   !string.IsNullOrWhiteSpace(dbName))
                 {
                     var dbPort = Configuration["DBPORT"] ?? "3306";
-                    var dbName = Configuration["DBNAME"] ?? "MvcMovie";
-                    var dbUser = Configuration["DBUSER"] ?? "root";
-                    var dbPass = Configuration["DBPASS"] ?? "password";
                     var dbSslMode = Configuration["DBSSLMODE"];
                     
                     connectionString = $"server={dbHost};port={dbPort};database={dbName};uid={dbUser};password={dbPass};";
